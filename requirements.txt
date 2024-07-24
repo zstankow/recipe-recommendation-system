@@ -1,0 +1,5 @@
+streamlit==1.36.0
+elasticsearch==8.14.0
+tqdm==4.66.4
+openai==1.37.0
+sentence_transformers==3.0.1
