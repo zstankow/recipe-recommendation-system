@@ -1,76 +1,96 @@
 import streamlit as st
-from openai import OpenAI
-from elasticsearch import Elasticsearch
-from sentence_transformers import SentenceTransformer
-from dotenv import load_dotenv
+import uuid
+import time
+from assistant import get_answer
+from db import save_conversation, save_feedback, get_recent_conversations, get_feedback_stats
 
-api_key =load_dotenv('OPENAI_API_KEY')
-client = OpenAI(api_key='api_key')
-
-es_client = Elasticsearch('http://localhost:9200') 
-
-model_name = 'multi-qa-MiniLM-L6-cos-v1'
-model = SentenceTransformer(model_name)
-index_name = "recipes"
-
-def elastic_search(search_term):
-    vector_search_term = model.encode(search_term)
-    search_query = {
-        "field": "text_vector",
-        "query_vector": vector_search_term,
-        "k": 5,
-        "num_candidates": 10000,
-    }
-
-    res = es_client.search(index=index_name, knn=search_query, source=["ingredients", "steps", "name", "description", "tags"])
-    result_docs = []
-    for hit in res["hits"]["hits"]:
-        result_docs.append(hit['_source'])
-
-    return result_docs
-
-def build_prompt(q, search_results):
-    prompt_template = """
-You are a recipe creator assistant. Answer the QUERY based on the CONTEXT from the FAQ database.
-Use only the facts from the CONTEXT when answering the QUERY.
-
-QUERY: {query}
-
-CONTEXT: 
-{context}
-""".strip()
-
-    context = ""
-    
-    for doc in search_results:
-        context += f"Recipe title: {doc['name']}\ndescription: {doc['description']}\ningredients: {doc['ingredients']}\nsteps: {doc['steps']}\n\n"
-    
-    prompt = prompt_template.format(query=q, context=context).strip()
-    return prompt
-
-def llm(prompt):
-    response = client.chat.completions.create(
-        model='gpt-3.5-turbo',
-        messages=[{"role": "user", "content": prompt}]
-    )
-    
-    return response.choices[0].message.content
-
-def rag(q):
-    res = elastic_search(q)
-    prompt = build_prompt(q, res)
-    answer = llm(prompt)
-    return answer
+def print_log(message):
+    print(message, flush=True)
 
 def main():
     st.title("RAG Recipe Assistant")
 
+    if 'conversation_id' not in st.session_state:
+        st.session_state.conversation_id = str(uuid.uuid4())
+        print_log(f"New conversation started with ID: {st.session_state.conversation_id}")
+    if 'count' not in st.session_state:
+        st.session_state.count = 0
+        print_log("Feedback count initialized to 0")
+    
+    # Model choice
+    model_choice = st.selectbox(
+        "Select a model:",
+        ["ollama/phi3", "openai/gpt-3.5-turbo", "openai/gpt-4o", "openai/gpt-4o-mini"]
+    )
+    print_log(f"User selected model: {model_choice}")
+
+    # Search type choice
+    search_type = st.radio(
+        "Select search type:",
+        ["Text", "Vector"]
+    )
+    print_log(f"User selected search type: {search_type}")
+
+    # User input
     user_input = st.text_input("Enter your query. (Hint: What do you feel like eating? What ingredients do you have? How much time do you have?)")
     if st.button("Ask"):
-        with st.spinner('Processing...'):
-            output = rag(user_input)
-            st.success("Completed!")
-            st.write(output)
+        print_log(f"User asked: '{user_input}'")
+        start_time = time.time()
+        answer_data = get_answer(user_input, model_choice, search_type)
+        end_time = time.time()
+        print_log(f"Answer received in {end_time - start_time:.2f} seconds")
+        st.success("Completed!")
+        st.write(answer_data['answer'])
+
+    # Monitering information
+    st.write(f"Response time: {answer_data['response_time']:.2f} seconds")
+    st.write(f"Relevance: {answer_data['relevance']}")
+    st.write(f"Model used: {answer_data['model_used']}")
+    st.write(f"Total tokens: {answer_data['total_tokens']}")
+    if answer_data['openai_cost'] > 0:
+        st.write(f"OpenAI cost: ${answer_data['openai_cost']:.4f}")
+
+    # Save conversation to database
+    print_log("Saving conversation to database")
+    save_conversation(st.session_state.conversation_id, user_input, answer_data)
+    print_log("Conversation saved successfully")
+
+    # Feedback buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("+1"):
+            st.session_state.count += 1
+            print_log(f"Positive feedback received. New count: {st.session_state.count}")
+            save_feedback(st.session_state.conversation_id, 1)
+            print_log("Positive feedback saved to database")
+    with col2:
+        if st.button("-1"):
+            st.session_state.count -= 1
+            print_log(f"Negative feedback received. New count: {st.session_state.count}")
+            save_feedback(st.session_state.conversation_id, -1)
+            print_log("Negative feedback saved to database")
+
+    st.write(f"Current count: {st.session_state.count}")
+
+    # Displaying conversation history
+    st.subheader("Recent Conversations")
+    relevance_filter = st.selectbox("Filter by relevance:", ["All", "RELEVANT", "PARTLY_RELEVANT", "NON_RELEVANT"])
+    recent_conversations = get_recent_conversations(limit=5, relevance=relevance_filter if relevance_filter != "All" else None)
+    for conv in recent_conversations:
+        st.write(f"Q: {conv['question']}")
+        st.write(f"A: {conv['answer']}")
+        st.write(f"Relevance: {conv['relevance']}")
+        st.write(f"Model: {conv['model_used']}")
+        st.write("---")
+
+    # Display feedback stats
+    feedback_stats = get_feedback_stats()
+    st.subheader("Feedback Statistics")
+    st.write(f"Thumbs up: {feedback_stats['thumbs_up']}")
+    st.write(f"Thumbs down: {feedback_stats['thumbs_down']}")
+
+print_log("Streamlit app loop completed")
 
 if __name__ == "__main__":
+    print_log("Course Assistant application started")
     main()
