@@ -31,17 +31,22 @@ git clone https://github.com/zstankow/ollama-FAQ-assistant.git
 ```bashrc
 cd recipe-recommendation-system/app
 ```
-3. Build and run the Docker containers
+3. Download the dataset
+```bashrc
+curl -L -o recipes.json https://github.com/zstankow/recipe-recommendation-system/releases/download/recipes/recipes.json
+```
+
+4. Build and run the Docker containers
 ```bashrc
 docker-compose build streamlit
 docker-compose up
 ```
 
-4. In a separate terminal navigate to the directory and run
+5. In a separate terminal navigate to the directory and run
 `python prep.py`
 This will initialize the postgres database.
 
-5. To use the phi3 model, navigate to directory in a new bash terminal
+6. To use the phi3 model, navigate to directory in a new bash terminal
 ```bashrc
 docker exec -it ollama bash
 ```
@@ -51,4 +56,4 @@ ollama pull phi3
 
 This downloads the phi3 model if you choose to use ollama with CPU instead of outsourcing to an OpenAI model. 
 
-5. Paste in url `http://localhost:8501/` 
+7. To open the app, paste in url `http://localhost:8501/` 
