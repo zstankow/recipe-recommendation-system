@@ -5,11 +5,12 @@ from elasticsearch import Elasticsearch
 from tqdm.auto import tqdm
 from dotenv import load_dotenv
 from db import init_db
+import os
+load_dotenv()
 
-ELASTIC_URL = load_dotenv("ELASTIC_URL_LOCAL")
-MODEL_NAME = load_dotenv("MODEL_NAME")
-INDEX_NAME = load_dotenv("INDEX_NAME")
-
+ELASTIC_URL = os.getenv("ELASTIC_URL_LOCAL")
+MODEL_NAME = os.getenv("MODEL_NAME")
+INDEX_NAME = os.getenv("INDEX_NAME")
 
 def fetch_documents():
     print('Fetching documents...')
@@ -83,8 +84,8 @@ def main():
     print("Starting the indexing process...")
     documents = fetch_documents()
     # ground_truth = fetch_ground_truth()
-    model = load_model()
     es_client = setup_elasticsearch()
+    model = load_model()
     index_documents(es_client, documents, model)
 
     print("Initializing database...")

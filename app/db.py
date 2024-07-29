@@ -1,3 +1,4 @@
+import os
 import psycopg2
 from psycopg2.extras import DictCursor
 from datetime import datetime
@@ -5,14 +6,16 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
 tz = ZoneInfo("Europe/Berlin")
+load_dotenv
 
 def get_db_connection():
     return psycopg2.connect(
-        host=load_dotenv("POSTGRES_HOST", "postgres"),
-        database=load_dotenv("POSTGRES_DB", "recipes"),
-        user=load_dotenv("POSTGRES_USER", "your_username"),
-        password=load_dotenv("POSTGRES_PASSWORD", "your_password"),
+        host=os.getenv("POSTGRES_HOST"),
+        database=os.getenv("POSTGRES_DB"),
+        user=os.getenv("POSTGRES_USER"),
+        password=os.getenv("POSTGRES_PASSWORD"),
     )
+
 
 def init_db():
     conn = get_db_connection()
@@ -24,7 +27,7 @@ def init_db():
             cur.execute("""
                 CREATE TABLE conversations (
                     id TEXT PRIMARY KEY,
-                    query TEXT NOT NULL,
+                    question TEXT NOT NULL,
                     answer TEXT NOT NULL,
                     model_used TEXT NOT NULL,
                     response_time FLOAT NOT NULL,
@@ -52,6 +55,7 @@ def init_db():
     finally:
         conn.close()
 
+
 def save_conversation(conversation_id, question, answer_data, timestamp=None):
     if timestamp is None:
         timestamp = datetime.now(tz)
@@ -65,7 +69,7 @@ def save_conversation(conversation_id, question, answer_data, timestamp=None):
                 (id, question, answer, model_used, response_time, relevance, 
                 relevance_explanation, prompt_tokens, completion_tokens, total_tokens, 
                 eval_prompt_tokens, eval_completion_tokens, eval_total_tokens, openai_cost, timestamp)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, COALESCE(%s, CURRENT_TIMESTAMP))
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, COALESCE(%s, CURRENT_TIMESTAMP))
             """,
                 (
                     conversation_id,
@@ -89,6 +93,7 @@ def save_conversation(conversation_id, question, answer_data, timestamp=None):
     finally:
         conn.close()
 
+
 def save_feedback(conversation_id, feedback, timestamp=None):
     if timestamp is None:
         timestamp = datetime.now(tz)
@@ -102,7 +107,8 @@ def save_feedback(conversation_id, feedback, timestamp=None):
             )
         conn.commit()
     finally:
-        conn.close()    
+        conn.close()
+
 
 def get_recent_conversations(limit=5, relevance=None):
     conn = get_db_connection()
@@ -121,6 +127,7 @@ def get_recent_conversations(limit=5, relevance=None):
             return cur.fetchall()
     finally:
         conn.close()
+
 
 def get_feedback_stats():
     conn = get_db_connection()

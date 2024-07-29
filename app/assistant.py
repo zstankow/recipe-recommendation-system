@@ -4,11 +4,15 @@ from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 import json
 import time
+import os
 
-ELASTIC_URL = load_dotenv('ELASTIC_URL')
-OLLAMA_URL = load_dotenv('OLLAMA_URL')
-OPENAI_API_KEY = load_dotenv('OPENAI_API_KEY')
-MODEL_NAME = load_dotenv('MODEL_NAME')
+load_dotenv()
+
+ELASTIC_URL = os.getenv('ELASTIC_URL')
+OLLAMA_URL = os.getenv('OLLAMA_URL')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+MODEL_NAME = os.getenv('MODEL_NAME')
+
 
 es_client = Elasticsearch(ELASTIC_URL) 
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
@@ -64,7 +68,8 @@ def elastic_search_knn(vector, field="text_vector", index_name="recipes"):
 def build_prompt(query, search_results):
     prompt_template = """
 You are a recipe creator assistant. Answer the QUERY based on the CONTEXT from the FAQ database.
-Use only the facts from the CONTEXT when answering the QUERY.
+Use only the recipes from the CONTEXT when answering the QUERY. Provide the recipe and the steps.
+You do not need to use all the ingredients listed in the query if you don't recommend it. 
 
 QUERY: {question}
 
@@ -83,30 +88,31 @@ CONTEXT:
 
 def llm(prompt, model_choice):
     start_time = time.time()
-    try:
-        if model_choice.startswith('ollama/'):
-            response = ollama_client.chat.completions.create(
-                model=model_choice.split('/')[-1],
-                messages=[{"role": "user", "content": prompt}]
-            )
-        
-        elif model_choice.startswith('openai/'):
-            response = openai_client.chat.completions.create(
+    if model_choice.startswith('ollama/'):
+        response = ollama_client.chat.completions.create(
             model=model_choice.split('/')[-1],
             messages=[{"role": "user", "content": prompt}]
         )
-        
-            
         answer = response.choices[0].message.content
         tokens = {
-                'prompt_tokens': response.usage.prompt_tokens,
-                'completion_tokens': response.usage.completion_tokens,
-                'total_tokens': response.usage.total_tokens
-            }
+            'prompt_tokens': response.usage.prompt_tokens,
+            'completion_tokens': response.usage.completion_tokens,
+            'total_tokens': response.usage.total_tokens
+        }
+    elif model_choice.startswith('openai/'):
+        response = openai_client.chat.completions.create(
+            model=model_choice.split('/')[-1],
+            messages=[{"role": "user", "content": prompt}]
+        )
+        answer = response.choices[0].message.content
+        tokens = {
+            'prompt_tokens': response.usage.prompt_tokens,
+            'completion_tokens': response.usage.completion_tokens,
+            'total_tokens': response.usage.total_tokens
+        }
+    else:
+        raise ValueError(f"Unknown model choice: {model_choice}")
         
-    except Exception as err:
-        print(err)
-
     end_time = time.time()
     response_time = end_time - start_time
     

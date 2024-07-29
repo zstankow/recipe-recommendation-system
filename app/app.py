@@ -20,7 +20,7 @@ def main():
     # Model choice
     model_choice = st.selectbox(
         "Select a model:",
-        ["ollama/phi3", "openai/gpt-3.5-turbo", "openai/gpt-4o", "openai/gpt-4o-mini"]
+        ["openai/gpt-4o-mini", "openai/gpt-3.5-turbo", "openai/gpt-4o", "ollama/phi3"]
     )
     print_log(f"User selected model: {model_choice}")
 
@@ -43,17 +43,17 @@ def main():
         st.write(answer_data['answer'])
 
     # Monitering information
-    st.write(f"Response time: {answer_data['response_time']:.2f} seconds")
-    st.write(f"Relevance: {answer_data['relevance']}")
-    st.write(f"Model used: {answer_data['model_used']}")
-    st.write(f"Total tokens: {answer_data['total_tokens']}")
-    if answer_data['openai_cost'] > 0:
-        st.write(f"OpenAI cost: ${answer_data['openai_cost']:.4f}")
+        st.write(f"Response time: {answer_data['response_time']:.2f} seconds")
+        st.write(f"Relevance: {answer_data['relevance']}")
+        st.write(f"Model used: {answer_data['model_used']}")
+        st.write(f"Total tokens: {answer_data['total_tokens']}")
+        if answer_data['openai_cost'] > 0:
+            st.write(f"OpenAI cost: ${answer_data['openai_cost']:.4f}")
 
-    # Save conversation to database
-    print_log("Saving conversation to database")
-    save_conversation(st.session_state.conversation_id, user_input, answer_data)
-    print_log("Conversation saved successfully")
+        # Save conversation to database
+        print_log("Saving conversation to database")
+        save_conversation(st.session_state.conversation_id, user_input, answer_data)
+        print_log("Conversation saved successfully")
 
     # Feedback buttons
     col1, col2 = st.columns(2)

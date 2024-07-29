@@ -1,5 +1,54 @@
-# Recipe Assistant using RAG!
+# RAG Recipe Assistant
 
-### Type in what you feel like eating and Recipe Assistant will recommend you a recipe!
+## Overview
+RAG Recipe Assistant is a Streamlit web application designed to assist users in finding recipes based on their queries. It leverages various language models to generate recipe recommendations and provides a feedback mechanism to improve its responses over time.
 
-![image](https://github.com/user-attachments/assets/18e43246-da97-4385-bb57-24633e9619ef)
+![alt text](image.png)
+
+## Example input/output:
+
+![alt text](image-1.png)
+![alt text](image-2.png)
+![alt text](image-3.png)
+
+
+## Features
+- Model Selection: Choose from different language models to process your queries.
+- Search Type: Select between text-based or vector-based search methods.
+- Real-Time Query Processing: Enter your query to get recipe suggestions in real-time.
+- Response Information: View details about the response time, relevance, model used, and cost (for OpenAI models).
+- Feedback System: Provide positive or negative feedback to improve the assistant.
+- Conversation History: Review recent conversations and filter them based on relevance.
+- Feedback Statistics: View overall feedback statistics for the application.
+
+## Installation
+
+1. Clone the repository
+```bashrc
+git clone https://github.com/zstankow/ollama-FAQ-assistant.git
+```
+2. Navigate to the directory
+```bashrc
+cd recipe-recommendation-system/app
+```
+3. Build and run the Docker containers
+```bashrc
+docker-compose build streamlit
+docker-compose up
+```
+
+4. In a separate terminal navigate to the directory and run
+`python prep.py`
+This will initialize the postgres database.
+
+5. To use the phi3 model, navigate to directory in a new bash terminal
+```bashrc
+docker exec -it ollama bash
+```
+```bashrc
+ollama pull phi3
+```
+
+This downloads the phi3 model if you choose to use ollama with CPU instead of outsourcing to an OpenAI model. 
+
+5. Paste in url `http://localhost:8501/` 
