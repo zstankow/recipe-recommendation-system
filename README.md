@@ -5,12 +5,6 @@ RAG Recipe Assistant is a Streamlit web application designed to assist users in 
 
 ![alt text](image.png)
 
-## Example input/output:
-
-![alt text](image-1.png)
-![alt text](image-2.png)
-![alt text](image-3.png)
-
 
 ## Features
 - Model Selection: Choose from different language models to process your queries.
@@ -20,6 +14,12 @@ RAG Recipe Assistant is a Streamlit web application designed to assist users in 
 - Feedback System: Provide positive or negative feedback to improve the assistant.
 - Conversation History: Review recent conversations and filter them based on relevance.
 - Feedback Statistics: View overall feedback statistics for the application.
+
+## Example input/output:
+
+![alt text](image-1.png)
+![alt text](image-2.png)
+![alt text](image-3.png)
 
 ## Installation
 
