@@ -1,9 +1,10 @@
 # RAG Recipe Assistant
 
 ## Overview
-RAG Recipe Assistant is a Streamlit web application designed to assist users in finding recipes based on their queries. It leverages various language models to generate recipe recommendations and provides a feedback mechanism to improve its responses over time.
+RAG Recipe Assistant is a Streamlit web application designed to assist users in finding recipes based on their queries. It leverages various language models to generate recipe recommendations and provides a feedback mechanism to improve its responses over time. The feedback stats are recorded in a Postgres database and used for a dashboard in grafana. 
 
 ![alt text](image.png)
+
 
 
 ## Features
@@ -56,4 +57,10 @@ ollama pull phi3
 
 This downloads the phi3 model if you choose to use ollama with CPU instead of outsourcing to an OpenAI model. 
 
-7. To open the app, paste in url `http://localhost:8501/` 
+7. To open the app, paste in url `http://localhost:8501/`
+
+## Grafana Dashboard
+
+![image](https://github.com/user-attachments/assets/c34c8566-7bac-495c-bedd-ac937f5c1b7e)
+![image](https://github.com/user-attachments/assets/694ad09d-2400-40da-9d58-cff5e2a37e0d)
+
